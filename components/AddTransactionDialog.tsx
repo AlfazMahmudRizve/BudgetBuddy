@@ -4,9 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Modal } from "./Modal";
+import { useSession } from "next-auth/react";
+import { useGuestTransactions } from "@/hooks/useGuestTransactions";
 
 export function AddTransactionDialog() {
     const router = useRouter();
+    const { data: session } = useSession();
+    const { addTransaction } = useGuestTransactions();
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
@@ -24,11 +29,30 @@ export function AddTransactionDialog() {
         setIsSubmitting(true);
 
         try {
-            await fetch("/api/transactions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-            });
+            if (session) {
+                // Authenticated: Save to DB
+                await fetch("/api/transactions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(formData),
+                });
+                router.refresh();
+            } else {
+                // Guest: Save to LocalStorage
+                addTransaction({
+                    description: formData.description,
+                    amount: Number(formData.amount),
+                    type: formData.type,
+                    category: formData.category,
+                    date: formData.date
+                });
+                // We might need to trigger a re-render in DashboardContainer if it doesn't pick up changes automatically.
+                // The useGuestTransactions hook uses separate state per instance unless we use a Context or a window event.
+                // Actually, custom hooks don't share state between components. 
+                // We need a proper Context or dispatch a custom event.
+                window.dispatchEvent(new Event("guest-transaction-updated"));
+            }
+
             setIsModalOpen(false);
             setFormData({
                 description: "",
@@ -37,7 +61,7 @@ export function AddTransactionDialog() {
                 category: "Food",
                 date: new Date().toISOString().split("T")[0],
             });
-            router.refresh();
+
         } catch (error) {
             console.error("Failed to add transaction", error);
         } finally {

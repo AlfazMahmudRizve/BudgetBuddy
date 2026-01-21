@@ -8,11 +8,24 @@ datasource db {
 }
 
 model Transaction {
-  id        String   @id @default(uuid())
-  amount    Float
-  type      String   // "income" or "expense"
+  id          String   @id @default(uuid())
+  amount      Float
+  type        String   // "income" or "expense"
   category    String
   description String
   date        DateTime
-  createdAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  password      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  transactions  Transaction[]
 }

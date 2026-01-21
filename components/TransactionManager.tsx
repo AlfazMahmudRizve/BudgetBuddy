@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Trash2, Plus } from "lucide-react";
 import { Modal } from "./Modal";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import { useGuestTransactions } from "@/hooks/useGuestTransactions";
 
 interface Transaction {
     id: string;
@@ -20,6 +22,9 @@ interface TransactionManagerProps {
 
 export function TransactionManager({ initialTransactions }: TransactionManagerProps) {
     const router = useRouter();
+    const { data: session } = useSession();
+    const { transactions: guestTransactions, addTransaction, deleteTransaction } = useGuestTransactions();
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
@@ -29,14 +34,20 @@ export function TransactionManager({ initialTransactions }: TransactionManagerPr
         date: new Date().toISOString().split("T")[0],
     });
 
+    // Use server transactions if logged in, otherwise guest transactions
+    const transactions = session ? initialTransactions : guestTransactions;
+
     const handleDelete = async (id: string) => {
-        // Optimistic delete could be added here, but router.refresh is simpler
         if (!confirm("Are you sure you want to delete this transaction?")) return;
 
-        await fetch(`/api/transactions/${id}`, {
-            method: "DELETE",
-        });
-        router.refresh();
+        if (session) {
+            await fetch(`/api/transactions/${id}`, {
+                method: "DELETE",
+            });
+            router.refresh();
+        } else {
+            deleteTransaction(id);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -44,11 +55,25 @@ export function TransactionManager({ initialTransactions }: TransactionManagerPr
         setIsSubmitting(true);
 
         try {
-            await fetch("/api/transactions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-            });
+            if (session) {
+                await fetch("/api/transactions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(formData),
+                });
+                router.refresh();
+            } else {
+                addTransaction({
+                    amount: Number(formData.amount),
+                    type: formData.type,
+                    category: formData.category,
+                    description: "", // Simple Manager doesn't have description field in form yet, or we ignored it
+                    date: formData.date
+                } as any);
+                // Trigger global update
+                window.dispatchEvent(new Event("guest-transaction-updated"));
+            }
+
             setIsModalOpen(false);
             setFormData({
                 amount: "",
@@ -56,7 +81,6 @@ export function TransactionManager({ initialTransactions }: TransactionManagerPr
                 category: "",
                 date: new Date().toISOString().split("T")[0],
             });
-            router.refresh();
         } catch (error) {
             console.error("Failed to add transaction", error);
         } finally {
@@ -88,13 +112,13 @@ export function TransactionManager({ initialTransactions }: TransactionManagerPr
                         </tr>
                     </thead>
                     <tbody>
-                        {initialTransactions.length === 0 ? (
+                        {transactions.length === 0 ? (
                             <tr>
                                 <td colSpan={5} className="px-6 py-10 text-center text-slate-500">
                                     No transactions found. Add one to get started.
                                 </td>
                             </tr>
-                        ) : initialTransactions.map((t) => (
+                        ) : transactions.map((t) => (
                             <tr key={t.id} className="border-b bg-white hover:bg-slate-50">
                                 <td className="px-6 py-4 font-medium text-slate-900">{t.category}</td>
                                 <td className="px-6 py-4">

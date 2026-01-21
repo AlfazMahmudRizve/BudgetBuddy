@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Receipt, Wallet } from "lucide-react";
+import { LayoutDashboard, Receipt, Wallet, LogOut, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSession, signOut } from "next-auth/react";
 
 const links = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -12,6 +13,7 @@ const links = [
 
 export function Sidebar() {
     const pathname = usePathname();
+    const { data: session } = useSession();
 
     return (
         <aside className="fixed left-0 top-0 z-40 h-screen w-64 -translate-x-full border-r bg-slate-900 text-white transition-transform sm:translate-x-0">
@@ -44,6 +46,31 @@ export function Sidebar() {
                         );
                     })}
                 </ul>
+
+                <div className="mt-auto border-t border-slate-800 pt-4">
+                    {session ? (
+                        <div className="space-y-4">
+                            <div className="px-2 text-sm text-slate-400">
+                                Signed in as <br /> <span className="text-white font-medium">{session.user?.email}</span>
+                            </div>
+                            <button
+                                onClick={() => signOut()}
+                                className="flex w-full items-center rounded-lg p-2 text-slate-300 hover:bg-slate-800 hover:text-white group transition-colors"
+                            >
+                                <LogOut className="h-5 w-5 flex-shrink-0 text-slate-400 group-hover:text-red-400 transition duration-75" />
+                                <span className="ml-3">Logout</span>
+                            </button>
+                        </div>
+                    ) : (
+                        <Link
+                            href="/login"
+                            className="flex items-center rounded-lg p-2 text-slate-300 hover:bg-slate-800 hover:text-white group transition-colors"
+                        >
+                            <LogIn className="h-5 w-5 flex-shrink-0 text-slate-400 group-hover:text-emerald-400 transition duration-75" />
+                            <span className="ml-3">Login</span>
+                        </Link>
+                    )}
+                </div>
             </div>
         </aside>
     );
