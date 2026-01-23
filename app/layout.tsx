@@ -7,8 +7,8 @@ import { Providers } from "@/components/Providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "BudgetBuddy",
-  description: "Personal finance tracker",
+  title: "CashOps - Financial Dashboard",
+  description: "Professional personal finance management",
 };
 
 export default function RootLayout({

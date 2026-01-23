@@ -26,11 +26,20 @@ export function calculateDashboardMetrics(transactions: Transaction[]) {
 
     const totalBalance = totalIncome - totalExpense;
 
+    // Helper to extract category name
+    const getCategoryName = (category: any): string => {
+        if (typeof category === 'object' && category !== null && 'name' in category) {
+            return category.name || "Uncategorized";
+        }
+        return String(category || "Uncategorized");
+    };
+
     // Group expenses by category
     const expenseByCategoryMap = normalizedTransactions
         .filter((t) => t.type === "expense")
         .reduce((acc, t) => {
-            acc[t.category] = (acc[t.category] || 0) + t.amount;
+            const catName = getCategoryName(t.category);
+            acc[catName] = (acc[catName] || 0) + t.amount;
             return acc;
         }, {} as Record<string, number>);
 
@@ -43,7 +52,8 @@ export function calculateDashboardMetrics(transactions: Transaction[]) {
     const incomeByCategoryMap = normalizedTransactions
         .filter((t) => t.type === "income")
         .reduce((acc, t) => {
-            acc[t.category] = (acc[t.category] || 0) + t.amount;
+            const catName = getCategoryName(t.category);
+            acc[catName] = (acc[catName] || 0) + t.amount;
             return acc;
         }, {} as Record<string, number>);
 

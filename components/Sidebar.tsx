@@ -42,11 +42,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div className="flex h-full flex-col px-3 py-4">
                     <div className="mb-5 flex items-center justify-between pl-2.5">
                         <div className="flex items-center">
-                            <div className="mr-3 p-1 bg-emerald-500 rounded-lg">
+                            <div className="mr-3 p-1 bg-blue-600 rounded-sm">
                                 <Wallet className="h-6 w-6 text-white" />
                             </div>
-                            <span className="self-center whitespace-nowrap text-xl font-semibold text-slate-900 dark:text-white">
-                                BudgetBuddy
+                            <span className="self-center whitespace-nowrap text-xl font-bold tracking-tight text-white font-mono">
+                                CashOps
                             </span>
                         </div>
                         <button

@@ -7,6 +7,11 @@ import { Modal } from "./Modal";
 import { useSession } from "next-auth/react";
 import { useGuestTransactions } from "@/hooks/useGuestTransactions";
 
+const FIXED_CATEGORIES = [
+  "Food", "Transport", "Housing", "Salary", "Freelance", 
+  "Utilities", "Entertainment", "Health", "Shopping", "Other"
+];
+
 export function AddTransactionDialog() {
     const router = useRouter();
     const { data: session } = useSession();
@@ -14,15 +19,15 @@ export function AddTransactionDialog() {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
     const [formData, setFormData] = useState({
         description: "",
         amount: "",
         type: "expense",
-        category: "Food", // Default category
+        category: "Food",
         date: new Date().toISOString().split("T")[0],
+        isRecurring: false
     });
-
-    const categories = ["Food", "Transport", "Rent", "Salary", "Entertainment", "Utilities", "Health", "Other"];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,26 +35,25 @@ export function AddTransactionDialog() {
 
         try {
             if (session) {
-                // Authenticated: Save to DB
+                // Authenticated: Send categoryName, backend handles upsert
                 await fetch("/api/transactions", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(formData),
+                    body: JSON.stringify({
+                        ...formData,
+                        categoryName: formData.category
+                    }),
                 });
                 router.refresh();
             } else {
-                // Guest: Save to LocalStorage
+                // Guest: Local Storage
                 addTransaction({
                     description: formData.description,
                     amount: Number(formData.amount),
                     type: formData.type,
-                    category: formData.category,
+                    category: { name: formData.category },
                     date: formData.date
-                });
-                // We might need to trigger a re-render in DashboardContainer if it doesn't pick up changes automatically.
-                // The useGuestTransactions hook uses separate state per instance unless we use a Context or a window event.
-                // Actually, custom hooks don't share state between components. 
-                // We need a proper Context or dispatch a custom event.
+                } as any);
                 window.dispatchEvent(new Event("guest-transaction-updated"));
             }
 
@@ -60,6 +64,7 @@ export function AddTransactionDialog() {
                 type: "expense",
                 category: "Food",
                 date: new Date().toISOString().split("T")[0],
+                isRecurring: false
             });
 
         } catch (error) {
@@ -73,79 +78,123 @@ export function AddTransactionDialog() {
         <>
             <button
                 onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-sm bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 transition-all font-mono shadow-sm shadow-blue-900/20"
             >
-                <Plus className="mr-2 h-4 w-4" /> Add Transaction
+                <Plus className="mr-2 h-4 w-4" /> Add Record
             </button>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add Transaction">
-                <form onSubmit={handleSubmit} className="space-y-4">
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="New Financial Record">
+                <form onSubmit={handleSubmit} className="space-y-5 font-mono">
+                    {/* Amount Input - Prominent */}
                     <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-900 dark:text-slate-200">Description</label>
+                        <label className="mb-2 block text-xs uppercase tracking-wider text-zinc-500 font-bold">Amount</label>
+                        <div className="relative">
+                            <span className="absolute left-4 top-3 text-zinc-400 font-bold">$</span>
+                            <input
+                                type="number"
+                                required
+                                step="0.01"
+                                value={formData.amount}
+                                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                                className="block w-full rounded-sm border border-zinc-800 bg-zinc-900 pl-8 p-3 text-lg font-bold text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                placeholder="0.00"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Type Selection - Red/Green Tokens */}
+                    <div>
+                        <label className="mb-2 block text-xs uppercase tracking-wider text-zinc-500 font-bold">Transaction Type</label>
+                        <div className="grid grid-cols-2 gap-4">
+                            <label className={`
+                                cursor-pointer rounded-sm border p-3 flex items-center justify-center space-x-2 transition-all
+                                ${formData.type === 'expense' 
+                                    ? 'bg-red-500/10 border-red-500 text-red-500' 
+                                    : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:border-zinc-700'}
+                            `}>
+                                <input type="radio" value="expense" checked={formData.type === 'expense'} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="hidden" />
+                                <span className="font-bold">Expense</span>
+                            </label>
+                            
+                            <label className={`
+                                cursor-pointer rounded-sm border p-3 flex items-center justify-center space-x-2 transition-all
+                                ${formData.type === 'income' 
+                                    ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' 
+                                    : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:border-zinc-700'}
+                            `}>
+                                <input type="radio" value="income" checked={formData.type === 'income'} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="hidden" />
+                                <span className="font-bold">Income</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                        <label className="mb-2 block text-xs uppercase tracking-wider text-zinc-500 font-bold">Details</label>
                         <input
                             type="text"
                             required
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="block w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-emerald-500"
-                            placeholder="e.g. Lunch with colleagues"
+                            className="block w-full rounded-sm border border-zinc-800 bg-zinc-900 p-3 text-sm text-zinc-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            placeholder="e.g. AWS Invoice"
                         />
                     </div>
 
-                    <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-900 dark:text-slate-200">Amount</label>
-                        <input
-                            type="number"
-                            required
-                            step="0.01"
-                            value={formData.amount}
-                            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                            className="block w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-emerald-500"
-                            placeholder="0.00"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-900 dark:text-slate-200">Type</label>
-                        <div className="flex space-x-4">
-                            <label className="flex items-center space-x-2 text-slate-700 dark:text-slate-300">
-                                <input type="radio" value="expense" checked={formData.type === 'expense'} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="h-4 w-4 border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-                                <span>Expense</span>
-                            </label>
-                            <label className="flex items-center space-x-2 text-slate-700 dark:text-slate-300">
-                                <input type="radio" value="income" checked={formData.type === 'income'} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="h-4 w-4 border-slate-300 text-emerald-600 focus:ring-emerald-500" />
-                                <span>Income</span>
-                            </label>
+                    {/* Category & Date */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="mb-2 block text-xs uppercase tracking-wider text-zinc-500 font-bold">Category</label>
+                            <select
+                                value={formData.category}
+                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                className="block w-full rounded-sm border border-zinc-800 bg-zinc-900 p-3 text-sm text-zinc-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            >
+                                {FIXED_CATEGORIES.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="mb-2 block text-xs uppercase tracking-wider text-zinc-500 font-bold">Date</label>
+                            <input
+                                type="date"
+                                required
+                                value={formData.date}
+                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                className="block w-full rounded-sm border border-zinc-800 bg-zinc-900 p-3 text-sm text-zinc-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                            />
                         </div>
                     </div>
 
-                    <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-900 dark:text-slate-200">Category</label>
-                        <select
-                            value={formData.category}
-                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            className="block w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-emerald-500"
-                        >
-                            {categories.map(cat => (
-                                <option key={cat} value={cat}>{cat}</option>
-                            ))}
-                        </select>
+                     {/* Recurring Toggle */}
+                     <div className="flex items-center space-x-2 pt-2">
+                        <input
+                            type="checkbox"
+                            id="recurring"
+                            checked={formData.isRecurring}
+                            onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
+                            className="rounded border-zinc-700 bg-zinc-900 text-blue-600 focus:ring-blue-500"
+                        />
+                        <label htmlFor="recurring" className="text-sm text-zinc-400 select-none">
+                            Recurring monthly
+                        </label>
                     </div>
 
-                    <div className="flex justify-end pt-4">
+                    <div className="flex justify-end pt-6 space-x-3">
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
-                            className="mr-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-5 py-2.5 text-sm font-medium text-slate-900 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-blue-700 dark:hover:text-blue-400"
+                            className="rounded-sm border border-zinc-800 px-5 py-2.5 text-sm font-bold text-zinc-400 hover:text-white hover:bg-zinc-800"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="rounded-lg bg-emerald-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300 disabled:opacity-50"
+                            className="rounded-sm bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50"
                         >
-                            {isSubmitting ? "Adding..." : "Add Transaction"}
+                            {isSubmitting ? "Processing..." : "Confirm"}
                         </button>
                     </div>
                 </form>

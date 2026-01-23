@@ -34,7 +34,15 @@ export function useGuestTransactions() {
     }, []);
 
     const addTransaction = (transaction: Omit<Transaction, "id">) => {
-        const newTransaction = { ...transaction, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+        // Safe ID generation fallback
+        const generateId = () => {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        };
+
+        const newTransaction = { ...transaction, id: generateId(), createdAt: new Date().toISOString() };
         const updated = [newTransaction, ...transactions];
         setTransactions(updated);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));

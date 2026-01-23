@@ -35,7 +35,7 @@ export function DashboardView({
                 <AddTransactionDialog />
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-3">
                 <StatCard
                     title="Total Balance"
                     value={`$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
@@ -55,12 +55,10 @@ export function DashboardView({
                 />
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            {/* Main Content Grid: 2x2 Equal Grid for Charts */}
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                 <TrendAreaChart data={trendData} />
                 <MonthlyBarChart data={monthlyData} />
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2">
                 <IncomePieChart data={incomeByCategory} />
                 <ExpensePieChart data={expenseByCategory} />
             </div>

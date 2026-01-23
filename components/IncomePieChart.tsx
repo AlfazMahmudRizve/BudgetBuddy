@@ -17,7 +17,7 @@ export function IncomePieChart({ data }: IncomePieChartProps) {
                 <h3 className="font-bold leading-none tracking-tight text-slate-900 dark:text-white">Income by Category</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Sources of your income</p>
             </div>
-            <div className="h-[300px] w-full relative">
+            <div className="h-[250px] w-full relative">
                 {data.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-400">
                         <div className="p-4 bg-slate-50 rounded-full mb-3">

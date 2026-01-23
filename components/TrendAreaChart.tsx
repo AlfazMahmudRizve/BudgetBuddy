@@ -18,7 +18,7 @@ export function TrendAreaChart({ data }: TrendAreaChartProps) {
                 <h3 className="font-bold leading-none tracking-tight text-slate-900 dark:text-white">Net Balance Trend</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Cumulative balance over time</p>
             </div>
-            <div className="h-[300px] w-full">
+            <div className="h-[250px] w-full">
                 {!hasData ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-400">
                         <div className="p-4 bg-slate-50 rounded-full mb-3">
