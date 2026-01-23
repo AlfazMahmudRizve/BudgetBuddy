@@ -130,11 +130,6 @@ export function calculateDashboardMetrics(transactions: Transaction[]) {
         }
     });
 
-    // Convert map to array and reverse to be chronological (oldest -> newest)
-    // We initialized current -> past, so map has Today first.
-    // wait, we want array to be Old -> New.
-    // Let's re-build.
-
     const burnRateData: { date: string; amount: number }[] = [];
     for (let i = 29; i >= 0; i--) {
         const d = new Date();
@@ -143,6 +138,38 @@ export function calculateDashboardMetrics(transactions: Transaction[]) {
         burnRateData.push({
             date: key,
             amount: burnRateMap.get(key) || 0
+        });
+    }
+
+    // Income Rate Data (Daily Income Last 30 Days)
+    const incomeRateMap = new Map<string, number>();
+    // Reuse thirtyDaysAgo from burn rate
+
+    // Initialize last 30 days with 0
+    for (let i = 0; i < 30; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        incomeRateMap.set(key, 0);
+    }
+
+    normalizedTransactions.forEach((t) => {
+        if (t.type === 'income' && t.dateValue >= thirtyDaysAgo) {
+            const key = t.dateValue.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            if (incomeRateMap.has(key)) {
+                incomeRateMap.set(key, incomeRateMap.get(key)! + t.amount);
+            }
+        }
+    });
+
+    const incomeRateData: { date: string; amount: number }[] = [];
+    for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        incomeRateData.push({
+            date: key,
+            amount: incomeRateMap.get(key) || 0
         });
     }
 
@@ -155,5 +182,6 @@ export function calculateDashboardMetrics(transactions: Transaction[]) {
         monthlyData,
         trendData,
         burnRateData,
+        incomeRateData,
     };
 }

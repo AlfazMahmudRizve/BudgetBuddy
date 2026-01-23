@@ -47,7 +47,7 @@ export function IncomePieChart({ data }: IncomePieChartProps) {
                                 <Label
                                     value={`$${total.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
                                     position="center"
-                                    className="fill-slate-900 text-3xl font-bold"
+                                    className="fill-slate-900 dark:fill-white text-3xl font-bold"
                                 />
                             </Pie>
                             <Tooltip
@@ -58,6 +58,7 @@ export function IncomePieChart({ data }: IncomePieChartProps) {
                                 verticalAlign="bottom"
                                 height={36}
                                 iconType="circle"
+                                formatter={(value) => <span className="text-slate-600 dark:text-slate-300 font-medium">{value}</span>}
                             />
                         </PieChart>
                     </ResponsiveContainer>

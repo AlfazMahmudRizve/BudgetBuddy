@@ -6,6 +6,7 @@ import { MonthlyBarChart } from "./MonthlyBarChart";
 import { TrendAreaChart } from "./TrendAreaChart";
 import { IncomePieChart } from "./IncomePieChart";
 import { BurnRateChart } from "./BurnRateChart";
+import { IncomeRateChart } from "./IncomeRateChart";
 import { CsvImportDialog } from "./CsvImportDialog";
 
 interface DashboardViewProps {
@@ -17,6 +18,7 @@ interface DashboardViewProps {
     monthlyData: { name: string; income: number; expense: number }[];
     trendData: { date: string; balance: number }[];
     burnRateData: { date: string; amount: number }[];
+    incomeRateData: { date: string; amount: number }[];
 }
 
 export function DashboardView({
@@ -28,6 +30,7 @@ export function DashboardView({
     monthlyData,
     trendData,
     burnRateData,
+    incomeRateData,
 }: DashboardViewProps) {
     return (
         <div className="space-y-8 pb-10">
@@ -66,8 +69,9 @@ export function DashboardView({
                 <ExpensePieChart data={expenseByCategory} />
             </div>
 
-            {/* Burn Rate - Full Width */}
-            <div className="w-full">
+            {/* Rate Charts - Side by Side */}
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+                <IncomeRateChart data={incomeRateData} />
                 <BurnRateChart data={burnRateData} />
             </div>
         </div>
