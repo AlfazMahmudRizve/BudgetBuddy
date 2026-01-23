@@ -10,23 +10,32 @@ export default async function Home() {
   const session = await getServerSession(authOptions);
   let transactions: Transaction[] = [];
 
-  if (session && session.user && (session.user as any).id) {
-    const dbTransactions = await prisma.transaction.findMany({
-      where: {
-        userId: (session.user as any).id,
-      },
-      orderBy: {
-        date: 'desc'
-      }
-    });
+  const userId = session?.user ? (session.user as any).id : undefined;
 
-    // Convert to compatible type (Date to string/Date)
-    transactions = dbTransactions.map(t => ({
-      ...t,
-      category: t.category, // Type assertion might be needed if mismatched
-      // Convert Prisma dates to Date objects (already are, but interface matches)
-    }));
+  if (userId && typeof userId === 'string') {
+    try {
+      const dbTransactions = await prisma.transaction.findMany({
+        where: {
+          userId: userId,
+        },
+        orderBy: {
+          date: 'desc'
+        }
+      });
+
+      // Convert to compatible type (Date to string/Date)
+      transactions = dbTransactions.map(t => ({
+        ...t,
+        category: t.category, // Type assertion might be needed if mismatched
+        // Convert Prisma dates to Date objects (already are, but interface matches)
+      }));
+    } catch (e) {
+      console.error("Failed to fetch transactions", e);
+      // Fallback or empty transactions
+    }
   }
+
+
 
   return (
     <DashboardContainer serverTransactions={transactions} />

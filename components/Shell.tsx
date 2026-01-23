@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Menu } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     // Or better, just default to true and let CSS handle mobile hiding initially?
     // User wants toggle.
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const pathname = usePathname();
 
     return (
         <div>
@@ -21,15 +23,23 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 isSidebarOpen ? "sm:ml-64" : "ml-0"
             )}>
                 {/* Header / Toggle Bar */}
-                <div className="mb-4 flex items-center">
-                    <button
-                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="p-2 mr-4 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        aria-label="Toggle Sidebar"
-                    >
-                        <Menu className="h-6 w-6" />
-                    </button>
-                    {/* Mobile Breadcrumb or Title could go here */}
+                <div className="mb-8 flex items-center justify-between">
+                    <div className="flex items-center">
+                        <button
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            className="p-2 mr-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            aria-label="Toggle Sidebar"
+                        >
+                            <Menu className="h-6 w-6" />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                {pathname === "/" ? "Dashboard" :
+                                    pathname === "/transactions" ? "Transactions" :
+                                        "CashOps"}
+                            </h1>
+                        </div>
+                    </div>
                 </div>
 
                 {children}

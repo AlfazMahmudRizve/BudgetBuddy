@@ -27,12 +27,10 @@ export function DashboardView({
 }: DashboardViewProps) {
     return (
         <div className="space-y-8 pb-10">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Dashboard</h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Overview of your personal finances</p>
+            <div className="flex flex-col sm:flex-row items-end justify-end gap-4 -mt-16 mb-6 pointer-events-none">
+                <div className="pointer-events-auto">
+                    <AddTransactionDialog />
                 </div>
-                <AddTransactionDialog />
             </div>
 
             <div className="grid gap-6 grid-cols-1 sm:grid-cols-3">
