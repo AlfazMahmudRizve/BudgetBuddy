@@ -4,6 +4,10 @@
 
 ![CashOps Dashboard](https://your-screenshot-url-here.com)
 
+## 🌐 Live Demo
+
+Check out the production build here: **[cashops.whoisalfaz.me](https://cashops.whoisalfaz.me)**
+
 ## 🚀 Features
 
 -   **High-Velocity Logging**:
