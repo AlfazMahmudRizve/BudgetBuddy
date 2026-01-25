@@ -2,9 +2,9 @@
 
 **CashOps** is a modern, high-performance personal finance dashboard designed for speed and clarity. Built with Next.js 14, Tailwind CSS, and Prisma, it helps you track expenses, analyze burn rates, and manage your financial health with an agentic-first workflow.
 
-![CashOps Dashboard](https://your-screenshot-url-here.com)
 
-## 🌐 Live Demo
+
+## 🌐 Live 
 
 Check out the production build here: **[cashops.whoisalfaz.me](https://cashops.whoisalfaz.me)**
 
